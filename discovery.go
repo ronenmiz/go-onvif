@@ -25,7 +25,7 @@ func StartDiscovery(duration time.Duration) ([]Device, error) {
 	ipAddrs := []string{}
 	for _, addr := range addrs {
 		ipAddr, ok := addr.(*net.IPNet)
-		if ok && !ipAddr.IP.IsLoopback() && ipAddr.IP.To4() != nil {
+		if ok && !ipAddr.IP.IsLoopback() && !ipAddr.IP.IsLinkLocalUnicast() && ipAddr.IP.To4() != nil {
 			ipAddrs = append(ipAddrs, ipAddr.IP.String())
 		}
 	}
@@ -48,7 +48,11 @@ func StartDiscovery(duration time.Duration) ([]Device, error) {
 
 func discoverDevices(ipAddr string, duration time.Duration) ([]Device, error) {
 	// Create WS-Discovery request
-	requestID := "uuid:" + uuid.NewV4().String()
+	UUID, err := uuid.NewV4()
+	if err != nil {
+		return []Device{}, err
+	}
+	requestID := "uuid:" + UUID.String()
 	request := `		
 		<?xml version="1.0" encoding="UTF-8"?>
 		<e:Envelope
